@@ -25,6 +25,7 @@
         android:ems="10"
         android:hint="Email"
         android:inputType="textEmailAddress"
+        android:text="cjkim112@gmail.com"
         app:layout_constraintBottom_toTopOf="@+id/editText_password_login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.503"
@@ -37,6 +38,7 @@
         android:ems="10"
         android:hint="Password"
         android:inputType="textPassword"
+        android:text="asdasdasd"
         app:layout_constraintBottom_toTopOf="@+id/button_register_login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
