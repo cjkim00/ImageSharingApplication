@@ -63,15 +63,6 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //check for empty email
-
-                //check for empty password
-
-                //check for valid email
-
-                //check for valid password
-
-                //onLoginSuccess();
                 if(checkEditTextFields()) {
                     loginUser();
                 }
@@ -85,7 +76,11 @@ public class LoginFragment extends Fragment {
     public void onStart() {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
-        //FirebaseUser currentUser = mAuth.getCurrentUser();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser != null) {
+            //works but commented out to do other testing
+            onLoginSuccess();
+        }
 
         //updateUI(currentUser);//login with information from currentUser
     }
@@ -98,16 +93,12 @@ public class LoginFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
                             Log.d("", "signInWithEmail:success");
-
                             onLoginSuccess();
                         } else {
-                            // If sign in fails, display a message to the user.
                             Log.w("", "signInWithEmail:failure", task.getException());
-                            Toast.makeText(getActivity(), "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                            //updateUI(null);
+                            Toast.makeText(getActivity(), "Login Failed",
+                                    Toast.LENGTH_LONG).show();
                         }
                     }
                 });
@@ -130,12 +121,10 @@ public class LoginFragment extends Fragment {
         return returnBool;
     }
 
-
-
     public void onLoginSuccess() {
         FirebaseUser user = mAuth.getCurrentUser();
         Intent intent = new Intent(getActivity(), ImageViewerActivity.class);
-        intent.putExtra("email", user.getEmail());
+        intent.putExtra("User", user);
         getActivity().startActivity(intent);
     }
 

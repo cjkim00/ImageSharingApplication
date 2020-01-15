@@ -13,9 +13,9 @@
 
             android:title="View Followers" />
         <item
-            android:id="@+id/nav_manage_followers"
+            android:id="@+id/nav_search"
 
-            android:title="Manage Followers" />
+            android:title="Search" />
         <item
             android:id="@+id/nav_liked_posts"
 

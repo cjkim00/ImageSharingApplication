@@ -2,10 +2,13 @@ package cjkim00.imagesharingapplication;
 
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import cjkim00.imagesharingapplication.ImageView.ImageViewerActivity;
 
 import android.util.Log;
@@ -24,7 +27,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 
+import org.json.JSONObject;
+
+import java.io.DataOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.PreparedStatement;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 
@@ -38,6 +47,7 @@ public class RegistrationFragment extends Fragment {
     private FirebaseAuth mAuth;
 
     private EditText mEmail;
+    private EditText mUsername;
     private EditText mPassword;
     private EditText mSecondPassword;
 
@@ -59,6 +69,7 @@ public class RegistrationFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_registration, container, false);
 
         mEmail = v.findViewById(R.id.editText_email_registration);
+        mUsername = v.findViewById(R.id.editText_username_registration_fragment);
         mPassword = v.findViewById(R.id.editText_password_registration);
         mSecondPassword = v.findViewById(R.id.editText_second_password_registration);
 
@@ -83,6 +94,7 @@ public class RegistrationFragment extends Fragment {
 
     public void registerUser() {
         String email = mEmail.getText().toString();
+        String username = mUsername.getText().toString();
         String password = mPassword.getText().toString();
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
@@ -92,7 +104,9 @@ public class RegistrationFragment extends Fragment {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d("", "createUserWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            onLoginSuccess(user.getEmail());
+                            //onLoginSuccess(user.getEmail());
+                            uploadToDatabase();
+                            replaceFragment(new LoginFragment());
                         } else {
                             // If sign in fails, display a message to the user.
                             FirebaseAuthException e = (FirebaseAuthException )task.getException();
@@ -130,6 +144,11 @@ public class RegistrationFragment extends Fragment {
             returnBool = false;
         }
 
+        value = mUsername.getText().toString();
+        if(value.length() == 0) {
+            mUsername.setError("Cannot be empty.");
+        }
+
         value = mPassword.getText().toString();
         if(!(value.length() == 0)) {
             if(checkPasswordLength()) {
@@ -151,6 +170,63 @@ public class RegistrationFragment extends Fragment {
             returnBool = false;
         }
         return returnBool;
+    }
+
+    public void uploadToDatabase() {
+        Thread thread = new Thread( new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    HttpURLConnection urlConnection = null;
+                    Uri uri = new Uri.Builder()
+                            .scheme("https")
+                            .appendPath("cjkim00-image-sharing-app.herokuapp.com")
+                            .appendPath("Registration")
+                            .build();
+
+                    URL url = new URL(uri.toString());
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+
+                    JSONObject jsonParam = new JSONObject();
+                    jsonParam.put("Email", mEmail.getText().toString());
+                    jsonParam.put("Username", mUsername.getText().toString());
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    os.writeBytes(jsonParam.toString());
+                    os.flush();
+                    os.close();
+
+                    Log.i("MSG", "STATUS: " + String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , "MESSAGE: " + conn.getResponseMessage());
+                    //conn.connect();
+
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+    }
+
+    public void replaceFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = Objects.requireNonNull(fragmentManager)
+                .beginTransaction();
+
+        fragmentTransaction.replace(((ViewGroup)(Objects.requireNonNull(getView()).getParent()))
+                .getId(), fragment);
+        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        fragmentTransaction.commit();
+        fragmentManager.popBackStack();
     }
 
 }

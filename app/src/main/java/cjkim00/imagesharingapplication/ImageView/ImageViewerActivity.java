@@ -1,31 +1,20 @@
 package cjkim00.imagesharingapplication.ImageView;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.ListResult;
-import com.google.firebase.storage.OnPausedListener;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageException;
-import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -33,6 +22,7 @@ import android.view.View;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.annotation.NonNull;
+
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -41,38 +31,38 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.FileSystem;
 import java.util.Objects;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+//import cjkim00.imagesharingapplication.Search.SearchFragment;
 import cjkim00.imagesharingapplication.Post.Post;
 //import cjkim00.imagesharingapplication.Post.PostFragment;
 import cjkim00.imagesharingapplication.Post.PostFragment;
+import cjkim00.imagesharingapplication.ProfileFragment;
 import cjkim00.imagesharingapplication.R;
+import cjkim00.imagesharingapplication.Search.Member;
+import cjkim00.imagesharingapplication.Search.SearchFragment;
 
 public class ImageViewerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        PostFragment.OnListFragmentInteractionListener {
+        PostFragment.OnListFragmentInteractionListener,
+        SearchFragment.OnListFragmentInteractionListener {
 
     private StorageReference mStorageRef;
     public String[] test = {"one", "two", "three", "four", "five"};
+    FirebaseUser mUser;
     public String mEmail;
 
     @Override
@@ -80,7 +70,6 @@ public class ImageViewerActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 
-        replaceFragment(new ImageViewerFragment());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -105,11 +94,13 @@ public class ImageViewerActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         Intent intent = getIntent();
-        mEmail = intent.getStringExtra("email");
-
+        mUser = (FirebaseUser) intent.getExtras().get("User");
+        mEmail = mUser.getEmail();
 
         //testRecyclerView();
-        loadPostFragment();
+        //loadPostFragment();
+        //replaceFragment(new PostFragment());
+        addFragment(new PostFragment());
     }
 
     @Override
@@ -124,8 +115,8 @@ public class ImageViewerActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.image_viewer, menu);
+
         return true;
     }
 
@@ -137,9 +128,7 @@ public class ImageViewerActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -154,8 +143,8 @@ public class ImageViewerActivity extends AppCompatActivity
             replaceFragment(new ProfileFragment());
         } else if (id == R.id.nav_view_followers) {
 
-        } else if (id == R.id.nav_manage_followers) {
-
+        } else if (id == R.id.nav_search) {
+            replaceFragment(new SearchFragment());
         } else if (id == R.id.nav_liked_posts) {
 
         } else if (id == R.id.nav_settings) {
@@ -170,10 +159,34 @@ public class ImageViewerActivity extends AppCompatActivity
     }
 
     public void replaceFragment(Fragment fragment) {
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = Objects.requireNonNull(fragmentManager)
                 .beginTransaction();
         fragmentTransaction.replace(R.id.layout_image_viewer, fragment);
+        //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        fragmentTransaction.commit();
+    }
+
+    public void addFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = Objects.requireNonNull(fragmentManager)
+                .beginTransaction();
+        fragmentTransaction.add(R.id.layout_image_viewer, fragment);
+        //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        fragmentTransaction.commit();
+    }
+
+    public void replaceSearchFragment(Fragment fragment, Bundle args) {
+        if(args != null) {
+            fragment.setArguments(args);
+        }
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = Objects.requireNonNull(fragmentManager)
+                .beginTransaction();
+        fragmentTransaction.add(R.id.layout_image_viewer, fragment);
+        fragmentTransaction.addToBackStack(null);
+
         fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         fragmentTransaction.commit();
     }
@@ -244,7 +257,6 @@ public class ImageViewerActivity extends AppCompatActivity
                     conn.setConnectTimeout(15000);
                     conn.setReadTimeout(15000);
 
-
                     JSONObject jsonParam = new JSONObject();
                     jsonParam.put("PostLocation", location);
                     jsonParam.put("Email", mEmail);
@@ -270,27 +282,6 @@ public class ImageViewerActivity extends AppCompatActivity
         thread.start();
     }
 
-    public void downloadFileTest(String location) {
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-        StorageReference islandRef = storageRef.child(location);
-
-        final long ONE_MEGABYTE = 1024 * 1024;
-
-        //ImageView imageView = findViewById(R.id.imageView_image_imageViewer);
-        islandRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                //imageView.setImageBitmap(bitmap);
-
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle any errors
-            }
-        });
-    }
 
     private String getRealPathFromURI(Uri contentURI) {
         String result;
@@ -306,7 +297,7 @@ public class ImageViewerActivity extends AppCompatActivity
         }
         return result;
     }
-
+    /*
     public void loadPostFragment() {
         Bundle args = new Bundle();
         args.putString(PostFragment.ARG_EMAIL, mEmail);
@@ -315,6 +306,8 @@ public class ImageViewerActivity extends AppCompatActivity
         frag.setArguments(args);
         replaceFragment(frag);
     }
+    */
+
     /*
     public void testRecyclerView() {
         Post[] testData = new Post[5];
@@ -331,9 +324,31 @@ public class ImageViewerActivity extends AppCompatActivity
         replaceFragment(frag);
     }
     */
+
+    public void hideSoftKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) this.getSystemService(this.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
+    }
+
+
     @Override
     public void onListFragmentInteraction(Post item) {
 
+    }
+
+    @Override
+    public void onListFragmentInteraction(Member member) {
+        hideSoftKeyboard();
+
+        EditText search = findViewById(R.id.editText_search_fragment_search);
+        search.clearFocus();
+        Bundle args = new Bundle();
+        args.putString("Username", member.getUsername());
+        args.putString("Description", member.getDescription());
+        args.putString("Location", member.getProfileImageLocation());
+        args.putInt("Followers", member.getFollowers());
+        args.putInt("Following", member.getFollowing());
+        replaceSearchFragment(new ProfileFragment(), args);
     }
 
     /*
