@@ -202,11 +202,7 @@ public class PostFragment extends Fragment {
                             , jsonPost.getInt("likes")
                             , jsonPost.getInt("views"));
                     arr.add(tempPost);
-
                 }
-                //arr = posts;
-
-
             } else {
                 Log.i("MSG", "No response");
             }

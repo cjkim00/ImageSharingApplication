@@ -343,6 +343,7 @@ public class ImageViewerActivity extends AppCompatActivity
         EditText search = findViewById(R.id.editText_search_fragment_search);
         search.clearFocus();
         Bundle args = new Bundle();
+        args.putString("CurrentUser", mUser.getEmail());
         args.putString("Username", member.getUsername());
         args.putString("Description", member.getDescription());
         args.putString("Location", member.getProfileImageLocation());

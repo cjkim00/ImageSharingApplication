@@ -203,7 +203,6 @@ public class SearchFragment extends Fragment {
                     os.writeBytes(jsonParam.toString());
                     os.flush();
                     os.close();
-                    //conn.connect();
 
                     int status = conn.getResponseCode();
                     Log.i("MSG", "STATUS: " + os.toString());
@@ -219,9 +218,7 @@ public class SearchFragment extends Fragment {
                             }
                             br.close();
                             Log.i("MSG", sb.toString());
-
                             getResults(sb.toString() , tempArray);
-
                     }
 
                 } catch (Exception e) {
@@ -233,7 +230,6 @@ public class SearchFragment extends Fragment {
         thread.join();
         mMembers = tempArray;
         mRecyclerView.setAdapter(new MySearchRecyclerViewAdapter(tempArray, mListener));
-        //mAdapter.notifyDataSetChanged();
     }
 
     public void getResults(String result, List<Member> arr) {
