@@ -8,6 +8,7 @@
     android:layout_height="match_parent"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
-
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:paddingTop="?attr/actionBarSize"
     tools:context=".Post.PostFragment"
     tools:listitem="@layout/fragment_post" />
